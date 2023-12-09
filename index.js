@@ -1,4 +1,11 @@
+// @ts-nocheck
+// TS
+/*
+import * as am5 from "@amcharts/amcharts5";
+import * as am5xy from "@amcharts/amcharts5/xy";
+*/
 // Загрузка данных через await
+import module from './maps.js';
 async function getDataAsync(url) {
     // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
     const response = await fetch(url, {
@@ -77,7 +84,7 @@ function getDataPromise(url) {
 }
 
 // Две функции просто для примера, выберите с await или promise, какая нравится
-const getData = getDataAsync || getDataPromise;
+const getData = getDataAsync; // || getDataPromise;
 
 async function loadCountriesData() {
     let countries = [];
@@ -102,6 +109,25 @@ const toCountry = document.getElementById('toCountry');
 const countriesList = document.getElementById('countriesList');
 const submit = document.getElementById('submit');
 const output = document.getElementById('output');
+
+function getCCA3ByNameCountry(from, to, countriesData) {
+    const cca3 = {
+        from: '',
+        to: '',
+    };
+    for (const [key, value] of Object.entries(countriesData)) {
+        if (cca3.from === '' && from === value?.name.common) {
+            cca3.from = value.cca3;
+        }
+        if (cca3.to === '' && to === value?.name.common) {
+            cca3.to = value.cca3;
+        }
+        if (cca3.to !== '' && cca3.from !== '') {
+            break;
+        }
+    }
+    return cca3;
+}
 
 (async () => {
     fromCountry.disabled = true;
@@ -130,13 +156,29 @@ const output = document.getElementById('output');
             option.value = countriesData[code].name.common;
             countriesList.appendChild(option);
         });
-
+    // console.log(countriesData);
     fromCountry.disabled = false;
     toCountry.disabled = false;
     submit.disabled = false;
-
-    form.addEventListener('submit', (event) => {
+    // ///////
+    fromCountry.value = 'China';
+    toCountry.value = 'United Kingdom';
+    // /////
+    form.addEventListener('submit', async (event) => {
         event.preventDefault();
+        const from = fromCountry.value;
+        const to = toCountry.value;
+        const cca3 = getCCA3ByNameCountry(from, to, countriesData);
+
+        const infoFrom = await getData(
+            `https://restcountries.com/v3.1/alpha/${cca3.from}?fields=name&fields=borders&fields=area`
+        );
+        const infoTo = await getData(
+            `https://restcountries.com/v3.1/alpha/${cca3.to}?fields=name&fields=borders&fields=area`
+        );
+        console.log(infoFrom);
+        console.log(infoTo);
+
         // TODO: Вывести, откуда и куда едем, и что идёт расчёт.
         // TODO: Рассчитать маршрут из одной страны в другую за минимум запросов.
         // TODO: Вывести маршрут и общее количество запросов.
