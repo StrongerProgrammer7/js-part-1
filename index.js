@@ -61,27 +61,36 @@ function managmentControl(disbled, ...controls)
     form.addEventListener('submit', async (event) =>
     {
         event.preventDefault();
-        output.textContent = 'Loading…';
-
-        managmentControl(true, fromCountry, toCountry, submit);
-
-        const from = fromCountry.value;
-        const to = toCountry.value;
-        const cca3 = getCCA3ByNameCountry(from, to, countriesData);
-
-        const path = await calcPath(cca3.from, cca3.to, countriesData);
-        if (path === null)
+        try
         {
-            output.textContent = `Path include island(or another continent) ${from} -> ${to}`;
+            output.textContent = 'Loading…';
+
+            managmentControl(true, fromCountry, toCountry, submit);
+
+            const from = fromCountry.value;
+            const to = toCountry.value;
+            const cca3 = getCCA3ByNameCountry(from, to, countriesData);
+
+            const path = await calcPath(cca3.from, cca3.to, countriesData);
+            if (path === null)
+            {
+                output.textContent = `Path include island(or another continent) ${from} -> ${to}`;
+            }
+            else
+            {
+                output.textContent = `${path}\nCount requests: ${totalRequest}`;
+            }
+            totalRequest = 0;
+            managmentControl(false, fromCountry, toCountry, submit);
+            /* const infoFrom = await getData(
+                `https://restcountries.com/v3.1/alpha/${cca3.from}?fields=name&fields=borders&fields=area`
+            );*/
         }
-        else
+        catch (error)
         {
-            output.textContent = `${path}\nCount requests: ${totalRequest}`;
+            output.textContent = 'Get error with work data, look console (F12)->Tab:Console';
+            console.log('Error in submit form, check url and data');
+            console.error(error);
         }
-        totalRequest = 0;
-        managmentControl(false, fromCountry, toCountry, submit);
-        /* const infoFrom = await getData(
-            `https://restcountries.com/v3.1/alpha/${cca3.from}?fields=name&fields=borders&fields=area`
-        );*/
     });
 })();
