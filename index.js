@@ -1,107 +1,13 @@
+/* eslint-disable prettier/prettier */
+/* eslint-disable no-restricted-imports */
 // @ts-nocheck
 // TS
 /*
 import * as am5 from "@amcharts/amcharts5";
 import * as am5xy from "@amcharts/amcharts5/xy";
 */
-// Загрузка данных через await
-import module from './maps.js';
-async function getDataAsync(url) {
-    // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
-    const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        redirect: 'follow',
-    });
 
-    // При сетевой ошибке (мы оффлайн) из `fetch` вылетит эксцепшн.
-    // Тут мы даём ему просто вылететь из функции дальше наверх.
-    // Если же его нужно обработать, придётся обернуть в `try` и сам `fetch`:
-    //
-    // try {
-    //     response = await fetch(url, {...});
-    // } catch (error) {
-    //     // Что-то делаем
-    //     throw error;
-    // }
-
-    // Если мы тут, значит, запрос выполнился.
-    // Но там может быть 404, 500, и т.д., поэтому проверяем ответ.
-    if (response.ok) {
-        return response.json();
-    }
-
-    // Пример кастомной ошибки (если нужно проставить какие-то поля
-    // для внешнего кода). Можно выкинуть и сам `response`, смотря
-    // какой у вас контракт. Главное перевести код в ветку `catch`.
-    const error = {
-        status: response.status,
-        customError: 'wtfAsync',
-    };
-    throw error;
-}
-
-// Загрузка данных через промисы (то же самое что `getDataAsync`)
-function getDataPromise(url) {
-    // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
-    return fetch(url, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        redirect: 'follow',
-    }).then(
-        (response) => {
-            // Если мы тут, значит, запрос выполнился.
-            // Но там может быть 404, 500, и т.д., поэтому проверяем ответ.
-            if (response.ok) {
-                return response.json();
-            }
-            // Пример кастомной ошибки (если нужно проставить какие-то поля
-            // для внешнего кода). Можно зареджектить и сам `response`, смотря
-            // какой у вас контракт. Главное перевести код в ветку `catch`.
-            return Promise.reject({
-                status: response.status,
-                customError: 'wtfPromise',
-            });
-        },
-
-        // При сетевой ошибке (мы оффлайн) из fetch вылетит эксцепшн,
-        // и мы попадём в `onRejected` или в `.catch()` на промисе.
-        // Если не добавить `onRejected` или `catch`, при ошибке будет
-        // эксцепшн `Uncaught (in promise)`.
-        (error) => {
-            // Если не вернуть `Promise.reject()`, для внешнего кода
-            // промис будет зарезолвлен с `undefined`, и мы не попадём
-            // в ветку `catch` для обработки ошибок, а скорее всего
-            // получим другой эксцепшн, потому что у нас `undefined`
-            // вместо данных, с которыми мы работаем.
-            return Promise.reject(error);
-        }
-    );
-}
-
-// Две функции просто для примера, выберите с await или promise, какая нравится
-const getData = getDataAsync; // || getDataPromise;
-
-async function loadCountriesData() {
-    let countries = [];
-    try {
-        // ПРОВЕРКА ОШИБКИ №1: ломаем этот урл, заменяя all на allolo,
-        // получаем кастомную ошибку.
-        countries = await getData('https://restcountries.com/v3.1/all?fields=name&fields=cca3&fields=area');
-    } catch (error) {
-        // console.log('catch for getData');
-        // console.error(error);
-        throw error;
-    }
-    return countries.reduce((result, country) => {
-        result[country.cca3] = country;
-        return result;
-    }, {});
-}
+import { getCCA3ByNameCountry, calcPath, loadCountriesData, totalRequest } from './blackBox.js';
 
 const form = document.getElementById('form');
 const fromCountry = document.getElementById('fromCountry');
@@ -110,40 +16,31 @@ const countriesList = document.getElementById('countriesList');
 const submit = document.getElementById('submit');
 const output = document.getElementById('output');
 
-function getCCA3ByNameCountry(from, to, countriesData) {
-    const cca3 = {
-        from: '',
-        to: '',
-    };
-    for (const [key, value] of Object.entries(countriesData)) {
-        if (cca3.from === '' && from === value?.name.common) {
-            cca3.from = value.cca3;
-        }
-        if (cca3.to === '' && to === value?.name.common) {
-            cca3.to = value.cca3;
-        }
-        if (cca3.to !== '' && cca3.from !== '') {
-            break;
-        }
+function managmentControl(disbled, ...controls)
+{
+    for (let i = 0; i < controls.length; i++)
+    {
+        controls[i].disabled = disbled;
     }
-    return cca3;
 }
-
-(async () => {
-    fromCountry.disabled = true;
-    toCountry.disabled = true;
-    submit.disabled = true;
-
+(async () =>
+{
+    managmentControl(true, fromCountry, toCountry, submit);
     output.textContent = 'Loading…';
     let countriesData = {};
-    try {
+    try
+    {
         // ПРОВЕРКА ОШИБКИ №2: Ставим тут брейкпоинт и, когда дойдёт
         // до него, переходим в оффлайн-режим. Получаем эксцепшн из `fetch`.
-        countriesData = await loadCountriesData();
-    } catch (error) {
+        countriesData = await loadCountriesData(
+            'https://restcountries.com/v3.1/all?fields=name&fields=cca3&fields=area&fields=borders'
+        );
+    }
+    catch (error)
+    {
         // console.log('catch for loadCountriesData');
         // console.error(error);
-        output.textContent = 'Something went wrong. Try to reset your compluter.';
+        output.textContent = `Something went wrong. Check url or connect with Internet.`;
         return;
     }
     output.textContent = '';
@@ -151,36 +48,40 @@ function getCCA3ByNameCountry(from, to, countriesData) {
     // Заполняем список стран для подсказки в инпутах
     Object.keys(countriesData)
         .sort((a, b) => countriesData[b].area - countriesData[a].area)
-        .forEach((code) => {
+        .forEach((code) =>
+        {
             const option = document.createElement('option');
             option.value = countriesData[code].name.common;
             countriesList.appendChild(option);
         });
+
     // console.log(countriesData);
-    fromCountry.disabled = false;
-    toCountry.disabled = false;
-    submit.disabled = false;
-    // ///////
-    fromCountry.value = 'China';
-    toCountry.value = 'United Kingdom';
-    // /////
-    form.addEventListener('submit', async (event) => {
+
+    managmentControl(false, fromCountry, toCountry, submit);
+    form.addEventListener('submit', async (event) =>
+    {
         event.preventDefault();
+        output.textContent = 'Loading…';
+
+        managmentControl(true, fromCountry, toCountry, submit);
+
         const from = fromCountry.value;
         const to = toCountry.value;
         const cca3 = getCCA3ByNameCountry(from, to, countriesData);
 
-        const infoFrom = await getData(
+        const path = await calcPath(cca3.from, cca3.to, countriesData);
+        if (path === null)
+        {
+            output.textContent = `Path include island(or another continent) ${from} -> ${to}`;
+        }
+        else
+        {
+            output.textContent = `${path}\nCount requests: ${totalRequest}`;
+        }
+        totalRequest = 0;
+        managmentControl(false, fromCountry, toCountry, submit);
+        /* const infoFrom = await getData(
             `https://restcountries.com/v3.1/alpha/${cca3.from}?fields=name&fields=borders&fields=area`
-        );
-        const infoTo = await getData(
-            `https://restcountries.com/v3.1/alpha/${cca3.to}?fields=name&fields=borders&fields=area`
-        );
-        console.log(infoFrom);
-        console.log(infoTo);
-
-        // TODO: Вывести, откуда и куда едем, и что идёт расчёт.
-        // TODO: Рассчитать маршрут из одной страны в другую за минимум запросов.
-        // TODO: Вывести маршрут и общее количество запросов.
+        );*/
     });
 })();

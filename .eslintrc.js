@@ -234,13 +234,7 @@ module.exports = {
         'no-sync': 'off',
         'array-bracket-spacing': ['error', 'never'],
         'block-spacing': ['error', 'always'],
-        'brace-style': [
-            'error',
-            '1tbs',
-            {
-                allowSingleLine: true,
-            },
-        ],
+        'brace-style': ['error', 'allman'],
         camelcase: [
             'error',
             {
