@@ -130,3 +130,41 @@ async function loadCountriesData(url = 'https://restcountries.com/v3.1/all?field
         return result;
     },{});
 }
+
+function getCountryByCode(code:string, countriesData:{ [key:string]: ICountry }):string
+{
+    for (const [key, value] of Object.entries(countriesData))
+    {
+        if (code !== '' && code === value?.cca3)
+        {
+            return value?.name?.common || '';
+        }
+    }
+    return '';
+}
+
+function getNameCountryInThePath(paths:Array<string>, countriesData: { [key:string]: ICountry }) : string
+{
+    let path = '';
+    module.setEndPoints(paths[0], paths[paths.length - 1]);
+    for (let i = 0; i < paths.length; i++)
+    {
+        const country = getCountryByCode(paths[i], countriesData);
+        if (i >= 1 && i <= paths.length - 1)
+            module.markAsVisited([paths[i - 1], paths[i]]);
+
+        if (i !== paths.length - 1)
+            path += `${country} -> `;
+        else
+            path += country;
+    }
+    return path;
+}
+
+function nearbyBroder(borders:Array<string>, endCountry:string) : string | null
+{
+    for (let i = 0; i < borders.length; i++)
+        if (borders[i] === endCountry)
+            return endCountry;
+    return null;
+}

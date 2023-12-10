@@ -112,8 +112,6 @@ async function loadCountriesData(url = 'https://restcountries.com/v3.1/all?field
     }
     return countries.reduce((result, country) =>
     {
-        console.log(result);
-        console.log(country);
         result[country.cca3] = country;
         return result;
     }, {});
