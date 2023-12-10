@@ -235,4 +235,4 @@ function getCCA3ByNameCountry(from:string, to:string, countriesData: {[key:strin
     return cca3;
 }
 
-export { getCCA3ByNameCountry, calcPath, loadCountriesData, totalRequest };
+export { ICountry,getCCA3ByNameCountry, calcPath, loadCountriesData, totalRequest };
