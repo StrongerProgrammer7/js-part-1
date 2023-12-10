@@ -168,3 +168,71 @@ function nearbyBroder(borders:Array<string>, endCountry:string) : string | null
             return endCountry;
     return null;
 }
+
+
+function findRoute(graph: { [key:string]: ICountry }, startCountry:string, endCountry:string, countReq = 0, visited = new Set(), maxSteps = 10) : Array<string> | null
+{
+    if (startCountry === endCountry)
+    {
+        totalRequest = countReq;
+        return [startCountry];
+    }
+
+    if (visited.has(startCountry) || maxSteps === 0)
+    {
+        return null;
+    }
+
+    visited.add(startCountry);
+
+    const borders = graph[startCountry]?.borders || [];
+    const endCountryNearbyBorder = nearbyBroder(borders, endCountry);
+    if (endCountryNearbyBorder !== null)
+    {
+        totalRequest = countReq;
+        return [startCountry, endCountry];
+    }
+
+    for (const neighbor of borders)
+    {
+        const result = findRoute(graph, neighbor, endCountry, countReq + 1, new Set(visited), maxSteps - 1);
+        if (result !== null)
+        {
+            return [startCountry, ...result];
+        }
+    }
+
+    return null;
+}
+
+async function calcPath(fromCode:string, toCode:string, countriesData:{[key:string]: ICountry}) : Promise<string>
+{
+    let paths = findRoute(countriesData, fromCode, toCode);
+    if (paths === null) // is island or other continent
+        paths = [fromCode, toCode];
+    return getNameCountryInThePath(paths, countriesData);
+}
+
+function getCCA3ByNameCountry(from:string, to:string, countriesData: {[key:string]: ICountry})
+{
+    const cca3 = {
+        from: '',
+        to: '',
+    };
+    for (const [key, value] of Object.entries(countriesData))
+    {
+        if (cca3.from === '' && from === (value?.name?.common || ''))
+        {
+            cca3.from = value.cca3;
+        }
+        if (cca3.to === '' && to === (value?.name?.common || ''))
+        {
+            cca3.to = value.cca3;
+        }
+        if (cca3.to !== '' && cca3.from !== '')
+            return cca3;
+    }
+    return cca3;
+}
+
+export { getCCA3ByNameCountry, calcPath, loadCountriesData, totalRequest };
