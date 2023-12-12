@@ -143,10 +143,15 @@ function getCountryByCode(code:string, countriesData:{ [key:string]: ICountry })
     return '';
 }
 
-function getNameCountryInThePath(paths:Array<string>, countriesData: { [key:string]: ICountry }) : string
+function getNameCountryInThePath(paths:Array<string>, countriesData: { [key:string]: ICountry },isIslandOrContinent: boolean) : string
 {
     let path = '';
     module.setEndPoints(paths[0], paths[paths.length - 1]);
+    if (isIslandOrContinent)
+    {
+        return 'Path include island(or another continent) ' + getCountryByCode(paths[0], countriesData) + '->' + getCountryByCode(paths[paths.length - 1], countriesData);
+    }
+
     for (let i = 0; i < paths.length; i++)
     {
         const country = getCountryByCode(paths[i], countriesData);
@@ -170,7 +175,7 @@ function nearbyBroder(borders:Array<string>, endCountry:string) : string | null
 }
 
 
-function findRoute(graph: { [key:string]: ICountry }, startCountry:string, endCountry:string, countReq = 0, visited = new Set(), maxSteps = 10) : Array<string> | null
+function findRoute(graph: { [key:string]: ICountry }, startCountry:string, endCountry:string, countReq = 0, visited = new Set(), maxSteps = 14) : Array<string> | null
 {
     if (startCountry === endCountry)
     {
@@ -207,10 +212,16 @@ function findRoute(graph: { [key:string]: ICountry }, startCountry:string, endCo
 
 async function calcPath(fromCode:string, toCode:string, countriesData:{[key:string]: ICountry}) : Promise<string>
 {
+    totalRequest = 0;
     let paths = findRoute(countriesData, fromCode, toCode);
-    if (paths === null) // is island or other continent
+    let isIslandOrContinent = false;
+    if (paths === null)
+    {
+        isIslandOrContinent = true;
         paths = [fromCode, toCode];
-    return getNameCountryInThePath(paths, countriesData);
+    }
+
+    return getNameCountryInThePath(paths, countriesData,isIslandOrContinent);
 }
 
 function getCCA3ByNameCountry(from:string, to:string, countriesData: {[key:string]: ICountry})

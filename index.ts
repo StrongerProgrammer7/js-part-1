@@ -72,15 +72,8 @@ function managmentControl(disbled:boolean, ...controls:Array<HTMLInputElement | 
             const cca3:{from:string,to:string} = getCCA3ByNameCountry(from, to, countriesData);
 
             const path:string = await calcPath(cca3.from, cca3.to, countriesData);
-            if (path === null)
-            {
-                output.textContent = `Path include island(or another continent) ${from} -> ${to}`;
-            }
-            else
-            {
-                output.textContent = `${path}\nCount requests: ${totalRequest}`;
-            }
-            totalRequest = 0;
+            output.textContent = `${path}     ---- Count requests: ${totalRequest}`;
+
             managmentControl(false, fromCountry, toCountry, submit);
             /* const infoFrom = await getData(
                 `https://restcountries.com/v3.1/alpha/${cca3.from}?fields=name&fields=borders&fields=area`
@@ -88,7 +81,7 @@ function managmentControl(disbled:boolean, ...controls:Array<HTMLInputElement | 
         }
         catch (error:unknown)
         {
-            output.textContent = 'Get error with work data, look console (F12)->Tab:Console';
+            output.textContent = 'Get error with work data, look console (F12)->Tab:Console or submit F5 (not Ctrl+F5)';
             console.log('Error in submit form, check url and data');
             console.error(error);
         }
